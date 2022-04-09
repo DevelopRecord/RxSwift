@@ -5,7 +5,7 @@ RxSwift를 사용하는 방법을 기초부터 세세하게 배웁니다
 
 ## why Rx?
 
-> ReactiveX is a library for composing asynchronous and event-based programs by using observable sequences.
+> ReactiveX is a library for composing asynchronous and event-based programs by using observable sequences.   
 직역하자면 
 ***
 _ReactiveX는 관찰 가능한 시퀀스를 사용하여 비동기 및 이벤트 기반 프로그램을 구성하기 위한 라이브러리입니다._
