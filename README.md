@@ -18,10 +18,11 @@ _잘 와닿지는 않지만 데이터 및 이벤트의 시퀀스를 지원하고
 
 ##### A. Cocoapods 설치 (m1 기준)
 ***
-1. 터미널을 이용하여 설치할 프로젝트 경로로 이동
+1. <pre><code>터미널을 이용하여 설치할 프로젝트 경로로 이동</code></pre>
 2. <pre><code>pod init</code></pre>
 3. <pre><code>open Podfile</code></pre>
-4. 텍스트 편집기에 설치할 팟 작성 후 저장
+4. <pre><code>텍스트 편집기에 설치할 팟 작성 후 저장</code></pre>   
+
 <pre>
 <code>
 pod 'RxSwift'
@@ -170,4 +171,81 @@ subject.onNext(9999) // 9999
 ***
 flatMap은 먼저 어떤 값이 들어왔든 최종적으로 모든 Observable이 하나로 합쳐지고 onNext 할때마다 방출되는 항목들이 순서대로 subscribe에게 전달됩니다.
 flatMap은 보통 네트워크 요청을 구현할 때 자주 활용됩니다.(Json, Database)
+***
+
+### CombineLatest   
+
+Link: [CombineLatest MarvelDiagram][CombineLatestLink]
+[CombineLatestLink]: https://reactivex.io/documentation/operators/combinelatest.html
+
+<pre><code>
+let disposeBag = DisposeBag()
+
+enum MyError: Error {
+   case error
+}
+
+let greetings = PublishSubject<String>()
+let languages = PublishSubject<String>()
+
+Observable.combineLatest(greetings, languages)
+   .subscribe { print($0 + " " + $1) }
+   .disposed(by: disposeBag)
+   
+greetings.onNext("하이") // 아무런 값을 출력하지 않습니다. 만약 구독과 동시에 값을 넘겨받고 싶다면 기본값을 주거나, BehaviorSubject(value: _)를 사용하면 됩니다
+languages.onNext("Rx!") // 하이 Rx!
+
+greetings.onNext("헬로우") // 헬로우 Rx! | 가장 최근에 전달받은 값을 subscribe에게 넘겨줍니다
+languages.onNext("RxSwift!") // 헬로우 RxSwift!
+
+greetings.onCompleted() // subscribe에 onCompleted() 메소드를 넘겨주지 않습니다
+//greetings.onError(MyError.error) // 소스 Observable 중 하나라도 onError() 메소드가 전달되면 그 즉시 subscribe에 에러 이벤트를 전달하고 종료합니다
+
+languages.onNext("RxJava!") // 헬로우 RxJava!
+languages.onCompleted() // 모든 소스 Observable이 onCompleted() 메소드를 전달하면 이 시점에 completed 메시지가 전달됩니다
+languages.onNext("RxKotlin!") // 따라서 RxKotlin!은 전달되지 않습니다
+</code></pre>
+
+### Binding
+
+바인더는 UI Binding에서 사용되는 observer 입니다.   
+바인더로 새로운 값을 전달하는 것(onNext)이라든지 onCompleted()를 사용하는 것은 가능하지만 onError() 메소드를 전달하는 것은 불가능합니다.   
+그 이유는 UI를 관리하고 제어하는 operator인데 에러를 받게 된다면 앱이 크래쉬가 발생하거나 앱이 동작이 멈추는 것을 방지하기 위함입니다.   
+또한 UI를 제어하는 것이기 때문에 Main Thread에서 실행되는 것을 보장합니다.   
+***
+
+아래 예시는 TextField에 작성한 String이 Label에 바로 업데이트 되는 간단한 앱입니다.
+기존의 과정대로면 아래 과정처럼 UITextFieldDelegate 프로토콜을 추가해야 합니다.  
+<pre><code>
+var valueLabel = UILabel()
+var valueField = UITextField()
+
+extension ExampleController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        guard let currentText = textField.text else { return }
+        
+        let finalText = (currentText as NSString).replacingCharacters(in: range, with: string)
+        valueLabel.text = finalText
+        
+        return true
+    }
+}
+</code></pre>
+
+아래 예시는 rx의 binding을 사용한 코드입니다.
+<pre><code>
+import RxCocoa
+
+var valueLabel = UILabel()
+var valueField = UITextField()
+let disposeBag = DisposeBag()
+
+valueField.rx.text
+   .bind(to: valueLabel.rx.text)
+   .disposed(by: disposeBag)
+</code></pre>
+
+***
+위에서 했던 과정처럼 Delegate 프로토콜을 추가하고 했던 과정들이 훨씬 간결합니다.   
+개발하면서 항상 이렇게 간결한 코드를 짤 수는 없겠지만 기존의 방식에 비하면 직관적이고 코드량도 적습니다.
 ***
