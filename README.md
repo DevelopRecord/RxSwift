@@ -176,7 +176,7 @@ flatMap은 보통 네트워크 요청을 구현할 때 자주 활용됩니다.(J
 ### CombineLatest   
 
 Link: [CombineLatest MarvelDiagram][CombineLatestLink]
-[CombineLatestLink]: https://reactivex.io/documentation/operators/combinelatest.html
+[CombineLatestLink]: [https://reactivex.io/documentation/operators/combinelatest.html]
 
 <pre><code>
 let disposeBag = DisposeBag()
