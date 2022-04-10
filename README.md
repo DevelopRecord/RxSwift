@@ -129,10 +129,7 @@ Observable.from(reactiveX) // 만약 배열 안에 요소들을 하나하나씩 
     .disposed(by: disposeBag)
 </code></pre>
 
-***
-just, of는 인자를 그대로 방출합니다. 즉, String을 받으면 String을 그대로, Array를 받으면 Array를 그대로 방출합니다. ([1, 2, 3] 이런식)   
-하지만 만약 배열 안 요소들을 하나씩 꺼내고 싶다면 just를 사용하면 배열 통째로가 아닌 배열 안의 요소들을 한개씩 순서대로 꺼낼 수 있습니다.
-***
+> just, of는 인자를 그대로 방출합니다. 즉, String을 받으면 String을 그대로, Array를 받으면 Array를 그대로 방출합니다.([1, 2, 3] 이런식) 하지만 만약 배열 안 요소들을 하나씩 꺼내고 싶다면 just를 사용하면 배열 통째로가 아닌 배열 안의 요소들을 한개씩 순서대로 꺼낼 수 있습니다.
 
 ### filter
 
@@ -168,10 +165,7 @@ subject.onNext(123) // 123
 subject.onNext(9999) // 9999
 </code></pre>
 
-***
-flatMap은 먼저 어떤 값이 들어왔든 최종적으로 모든 Observable이 하나로 합쳐지고 onNext 할때마다 방출되는 항목들이 순서대로 subscribe에게 전달됩니다.
-flatMap은 보통 네트워크 요청을 구현할 때 자주 활용됩니다.(Json, Database)
-***
+> flatMap은 먼저 어떤 값이 들어왔든 최종적으로 모든 Observable이 하나로 합쳐지고 onNext 할때마다 방출되는 항목들이 순서대로 subscribe에게 전달됩니다. flatMap은 보통 네트워크 요청을 구현할 때 자주 활용됩니다.(Json, Database)
 
 ### CombineLatest   
 
@@ -239,12 +233,34 @@ var valueLabel = UILabel()
 var valueField = UITextField()
 let disposeBag = DisposeBag()
 
+// valueField.rx.text
+//    .observe(on: MainScheduler.instance)
+//    .subscribe(onNext: { [weak self] str in
+//       self.valueLabel.text = str
+//    })
+//    .disposed(by: disposeBag)
+
 valueField.rx.text
    .bind(to: valueLabel.rx.text)
    .disposed(by: disposeBag)
 </code></pre>
+   
+위의 코드 중간에 주석이 적용된 코드와 아래 코드는 동일하게 동작합니다.   
+차이점이라고 한다면 코드가 더 짧아진 것을 볼 수 있어요.   
+우리가 RxSwift를 사용하기 전에 GCD를 사용할 때는 DispatchQueue, OperatorQueue를 사용했습니다.   
+하지만 RxSwift에서는 observe(on:)를 사용해 비동기적으로 멀티 쓰레드에서 동작하게 할 수 있습니다.   
+그러나 이것보다 더 간단하게 적용이 가능한 코드가 bind(to:)를 사용해 멀티 쓰레드에서 동작함과 동시에 약한 참조(weak self)를 대신할 수도 있습니다.   
 
-***
-위에서 했던 Delegate 프로토콜을 추가하고 했던 과정보다 훨씬 간결합니다.   
-개발하면서 항상 이렇게 간결한 코드를 짤 수는 없겠지만 기존의 방식에 비하면 직관적이고 코드량도 적습니다.
-***
+> 위에서 했던 Delegate 프로토콜을 추가하고 했던 과정보다 훨씬 간결합니다. 개발하면서 항상 이렇게 간결한 코드를 짤 수는 없겠지만 기존의 방식에 비하면 직관적이고 코드량도 적습니다.
+
+### Obseravble의 생명주기   
+
+##### Observable의 생명주기는 간단하게 아래와 같이 설명할 수 있습니다.
+
+1. Create
+2. Subscribe
+3. onNext
+4. onCompleted / onError
+5. Disposed
+   
+> Observable(관찰대상)을 만들고, Observer는 관찰대상을 구독(subscribe)합니다. 그리고 Observable이 이벤트를 방출하면 Observer는 이벤트를 수신하고 그 이벤트를 수행합니다.
