@@ -264,3 +264,139 @@ valueField.rx.text
 5. Disposed
    
 > Observable(관찰대상)을 만들고, Observer는 관찰대상을 구독(subscribe)합니다. 그리고 Observable이 이벤트를 방출하면 Observer는 이벤트를 수신하고 그 이벤트를 수행합니다.
+   
+*** 
+
+# 3. Challenges
+
+### 뉴스 앱의 JSON 정보를 RxSwift, MVVM, Alamofire로 가져와 보자(No Storyboard)
+
+##### A. 시작 전 모든 과정을 글로 풀어봅니다.
+1. Main.storyboard 파일 삭제 및 Info.plist의 Storyboard 정보 삭제
+2. SceneDelegate 지정 및 메인 뷰 컨트롤러 생성
+3. ViewModel 구조체 생성
+<pre><code>
+struct ArticleResponse {
+   var status: String
+   var totalResults: Int
+   var articles: [Article]
+}
+
+struct Article {
+   var urlToImage: String?
+   var title: String?
+   var description: String?
+}
+</code></pre>
+import Alamofire
+import RxSwift
+
+4. Service 클래스 생성
+<pre><code>
+class ArticleService {
+   func fetchNews() -> Observable<[Article]> { // 반환형이 Observable의 [Article] 배열
+      return Observable<[Article]>.create { observer in
+         self.fetchNews { error, articles in 
+            if let error = error {
+               observer.onError(error) // onError로 에러를 넘겨줍니다
+            }
+            
+            if let articles = articles {
+               observer.onNext(articles) // onNext로 articles의 정보를 넘겨줍니다
+            }
+            
+            observer.onCompleted() // observer onCompleted로 완료되었다고 알립니다
+         }
+         
+         return Disposables.create() observer의 사용이 끝나면 메모리에서 해제시켜 줍니다
+      }
+   }
+   
+   func fetchNews(completion: @escaping((Error?, [Article]?) -> Void)) {
+      let urlString = "https://newsapi.org/v2/everything?q=tesla&from=2022-03-13&sortBy=publishedAt&apiKey=API_KEY"
+      guard let url = URL(string: urlString) else { return completion(NSError(domain: "", code: 404, userInfo: nil), nil) }
+      
+      AF.request(url, method: .get, parameters: nil, encoding: JSONEncoding.default, headers: nil, interceptor: nil, requestModifier: nil).responseDecodable(ArticleResponse.self) { response in // response에 article 정보 혹은 error가 들어있습니다
+         if let error = response.error {
+            print("잘못된 URL")
+            return completion(error, nil)
+         }
+         
+         if let articles = response.value?.article {
+            print("성공")
+            return completion(nil, articles)
+         }
+      }
+   }
+}
+</code></pre>
+5. 의존성 주입
+A. 의존성(Dependency)?
+> 객체 지향 프로그래밍에서 의존성은 서로 다른 객체 사이에 의존성이 있다는 것을 의미합니다. 즉 의존 개체가 수정되면 다른 한쪽의 개체도 영향을 받습니다.
+<pre><code>
+struct Order {
+   func americano() {
+      print("아메리카노")
+   }
+   
+   func vanilla() {
+      print("바닐라 라떼")
+   }
+}
+
+struct Person {
+   var order: Order
+   
+   func bitter() {
+      order.americano()
+   }
+   
+   func sweet() {
+      order.vanilla()
+   }
+}
+</code></pre>
+Person 객체는 Eat객체를 인스턴스로 사용중입니다. 즉 Eat 객체에 대한 의존성이 올라가겠죠?   
+만약 이 때 Eat객체의 데이터의 변화가 생긴다면? 당연히 Person도 영향을 받습니다.   
+이렇게 의존성이 높아지면 변화가 생길 때마다 매번 코드를 수정해야 하고 재사용성도 떨어지게 됩니다. 이럴 때 적용하기 좋은 개념이 '의존성 주입' 입니다.   
+의존성 주입의 핵심은 외부에서 객체를 생성하고 데이터를 넣는 것입니다. 여기서 프로토콜을 사용하게 됩니다.   
+
+<pre><code>
+struct Order: Taste {
+   var bitter: String
+   var sweet: String
+   
+   init(bitter: String, sweet: String) {
+      self.bitter = bitter
+      self.sweet = sweet
+   }
+
+   func americano() {
+      print("아메리카노")
+   }
+   
+   func vanilla() {
+      print("바닐라 라떼")
+   }
+}
+
+let order = Order(bitter: "아메리카노", vanilla: "바닐라 라떼") // 이렇게 외부에서 주입이 가능합니다
+</code></pre>
+
+### 의존성 주입의 장점
+1. 매번 수정해야 하는 번거로움이 사라집니다.
+2. 코드 재사용성이 높아집니다.
+3. 자연스럽게 객체간의 의존성이 낮아집니다.
+
+6. 의존성 주입 개념을 적용하여 Service 수정 및 MainViewModel 생성
+1. 프로토콜을 생성합니다.
+<pre><code>
+   protocol ArticleServiceProtocol {
+      func fetchNews() -> Observable<[Article]>
+   }
+</code></pre>
+2. ArticleService 클래스가 프로토콜을 준수합니다.
+3. MainViewModel에서 articleServiceProtocol 인스턴스를 생성 및 초기화 후 뉴스 정보를 가져오는 함수를 작성합니다.
+<pre><code>
+func fetchNews() -> Observable
+</code></pre>
