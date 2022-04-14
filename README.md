@@ -330,8 +330,8 @@ class ArticleService {
    }
 }
 </code></pre>
-5. 의존성 주입
-A. 의존성(Dependency)?
+5. 의존성 주입   
+A. ### 의존성(Dependency)?
 > 객체 지향 프로그래밍에서 의존성은 서로 다른 객체 사이에 의존성이 있다는 것을 의미합니다. 즉 의존 개체가 수정되면 다른 한쪽의 개체도 영향을 받습니다.
 <pre><code>
 struct Order {
@@ -382,21 +382,24 @@ struct Order: Taste {
 
 let order = Order(bitter: "아메리카노", vanilla: "바닐라 라떼") // 이렇게 외부에서 주입이 가능합니다
 </code></pre>
-
-### 의존성 주입의 장점
-1. 매번 수정해야 하는 번거로움이 사라집니다.
-2. 코드 재사용성이 높아집니다.
-3. 자연스럽게 객체간의 의존성이 낮아집니다.
+### 의존성 주입
+#### 의존성 주입의 장점
+* 매번 수정해야 하는 번거로움이 사라집니다.
+* 코드 재사용성이 높아집니다.
+* 자연스럽게 객체간의 의존성이 낮아집니다.
 
 6. 의존성 주입 개념을 적용하여 Service 수정 및 MainViewModel 생성
-1. 프로토콜을 생성합니다.
+A. 프로토콜을 생성합니다.
 <pre><code>
    protocol ArticleServiceProtocol {
       func fetchNews() -> Observable<[Article]>
    }
 </code></pre>
-2. ArticleService 클래스가 프로토콜을 준수합니다.
-3. MainViewModel에서 articleServiceProtocol 인스턴스를 생성 및 초기화 후 뉴스 정보를 가져오는 함수를 작성합니다.
+B. ArticleService 클래스가 프로토콜을 준수합니다.
+C. MainViewModel에서 articleServiceProtocol 인스턴스를 생성 및 초기화 후 뉴스 정보를 가져오는 함수를 작성합니다.
 <pre><code>
-func fetchNews() -> Observable
+func fetchArticle() -> Observable<[ArticleViewModel]> {
+   articleServiceProtocol.map { $0.map { ArticleViewModel(article: $0) }
+}
 </code></pre>
+7. View에 뿌려줄 ImageView, Title, Description 등의 정보를 넣을 프로퍼티 생성 및 뿌려주기
