@@ -388,18 +388,18 @@ let order = Order(bitter: "아메리카노", vanilla: "바닐라 라떼") // 이
 * 코드 재사용성이 높아집니다.
 * 자연스럽게 객체간의 의존성이 낮아집니다.
 
-6. 의존성 주입 개념을 적용하여 Service 수정 및 MainViewModel 생성
-A. 프로토콜을 생성합니다.
+6. 의존성 주입 개념을 적용하여 Service 수정 및 MainViewModel 생성   
+A. 프로토콜을 생성합니다.   
 <pre><code>
    protocol ArticleServiceProtocol {
       func fetchNews() -> Observable<[Article]>
    }
 </code></pre>
-B. ArticleService 클래스가 프로토콜을 준수합니다.
-C. MainViewModel에서 articleServiceProtocol 인스턴스를 생성 및 초기화 후 뉴스 정보를 가져오는 함수를 작성합니다.
+B. ArticleService 클래스가 프로토콜을 준수합니다.   
+C. MainViewModel에서 articleServiceProtocol 인스턴스를 생성 및 초기화 후 뉴스 정보를 가져오는 함수를 작성합니다.   
 <pre><code>
 func fetchArticle() -> Observable<[ArticleViewModel]> {
    articleServiceProtocol.map { $0.map { ArticleViewModel(article: $0) }
 }
 </code></pre>
-7. View에 뿌려줄 ImageView, Title, Description 등의 정보를 넣을 프로퍼티 생성 및 뿌려주기
+7. View에 뿌려줄 ImageView, Title, Description 등의 정보를 넣을 프로퍼티 생성 및 뿌려주기   
